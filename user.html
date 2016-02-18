@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+	<style type="text/css">
+	input
+	{
+	border-top:0px ;
+	border-left:0px ;
+	border-right:0px ;
+	border-bottom:0px;
+	}
+</style>
+	<script src="js/jquery-1.10.2.min.js" type="text/javascript"></script>
+	<script src="js/bootstrap.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="/webiopi.js"></script>
+	<script type="text/javascript">
+	
+	webiopi().ready(function() {
+		$("#inputText").keyup(function(event){
+		    if(event.keyCode == 13){
+		        sendData();
+		    }
+		});
+		$.get("/devices/*", function(data) {
+			var devices = $("#devices");
+			var added = false;
+			for (i in data) {
+				if (data[i].type=="Serial") {
+					added = true;
+					devices.append($("<option>" + data[i].name + "</option>"))
+				}
+			}
+			if (added) {
+				readData();
+			}
+		});
+	});
+	
+	function readData() {
+		webiopi().Serial($("#devices").val()).read(function(data) {
+			if (data.length > 0) {
+				//var d = $("#output").text() + data;
+				//$("#output").text(d);
+				if(data.charCodeAt(0)>30 && data.charCodeAt(0)<60)
+				{
+					document.getElementById("Temp").value=data.charCodeAt(0)-10+"度";
+					
+				}
+				switch (data)
+				{
+					case 'D': //dangenous
+						document.getElementById("dangerous").innerHTML="<span class='label label-danger'>危險--請保持安全距離</span>";
+						//alert("aa");
+					break;
+					case 'U': //Uphill
+						document.getElementById("Caution").innerHTML="<span class='label label-warning'>警告--上坡</span>";
+					break;
+					case 'O': //Downhill
+						document.getElementById("Caution").innerHTML="<span class='label label-warning'>警告--下坡，請試踩煞車</span>";
+					break;
+					case 'A': 
+						document.getElementById("dangerous").innerHTML="<span class='label label-success'>已保持安全距離</span>";
+					break;
+					case 'F': 
+						document.getElementById("Caution").innerHTML="<span class='label label-success'>安全--路面平順</span>";
+					break;
+					default:
+					
+				}
+			}
+		});
+		setTimeout(readData,10);
+	}
+	
+	function sendData(data) {
+		//var data = $("#inputText").val();
+		
+		webiopi().Serial($("#devices").val()).write(data);
+		
+		//$("#inputText").val("");
+	}
+	
+	function deviceChanged() {
+		$("#output").text("");
+	}
+	
+	</script>
+	<style type="text/css">
+		#inputText {
+			width: 550px;
+		}
+	</style>
+</head>
+<body>
+<span>Serial device : </span><select id="devices" onchange="deviceChanged()"></select><br/>
+<!--<span>Input : </span><br/>
+<textarea id="output" rows="30" cols="100" disabled="disabled"></textarea><br/>
+<span>Output : </span><input id="inputText" type="text"/>-->
+<br>
+<center>
+目前溫度:攝氏<input type="text" id="Temp"  readonly></input>
+</center>
+<br>
+<center>
+<div id="Caution"></div><br><div id="dangerous">
+</center>
+<br>
+
+<center>
+	<button type="button" class="btn btn-default" aria-label="Align" OnClick="sendData('G')"> <!--GO-->
+			<span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+	</button>
+</center>
+<br><center>
+		<button type="button" class="btn btn-default" aria-label="Align" OnClick="sendData('L')"> <!--Left-->
+			<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+		</button>
+		<button type="button" class="btn btn-default" aria-label="Align" OnClick="sendData('B')"><!--back-->
+			<span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
+		</button>
+		<button type="button" class="btn btn-default" aria-label="Align" OnClick="sendData('R')"><!--Right-->
+			<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+		</button>
+		
+		<br>
+		<button type="button" class="btn btn-default" aria-label="Align" OnClick="sendData('S')"><!--STOP-->
+			<span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span>
+		</button>
+	
+	</center>
+	
+</body>
+</html>
